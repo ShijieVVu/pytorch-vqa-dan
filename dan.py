@@ -255,7 +255,8 @@ class MovieDAN(nn.Module):
       
         batch_size, memory_size = memory.shape
         batch_size, answer_size, hidden_size = answer_features.shape
-        # memory: (batch_size, memory_size)
+        
+	# memory: (batch_size, memory_size)
         # ( batch_size, hidden_size )
         # Bilinear scoring
         memory = memory.unsqueeze(1) # (batch_size, answer_size, memory_size)

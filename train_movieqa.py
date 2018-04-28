@@ -76,7 +76,10 @@ def run(net, dataset, optimizer, train=False, prefix='', epoch=0):
         total_count += acc.shape[0]
         total_loss += loss.data[0] * acc.shape[0]
         total_acc += acc.sum()
-
+    acc = total_acc / total_count
+    loss = total_loss / total_count
+    print("loss: {} acc {}".format(loss, acc))
+"""
         for obj in gc.get_objects():
             try:
                 if torch.is_tensor(obj) or (hasattr(obj, 'data') and torch.is_tensor(obj.data)):
@@ -86,16 +89,12 @@ def run(net, dataset, optimizer, train=False, prefix='', epoch=0):
                 pass
 
         gc.collect()
-#        import pdb; pdb.set_trace()
-        
+        import pdb; pdb.set_trace()
+       
         if total_iterations % 5 == 0:
             max_mem_used = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
 #            print("{:.2f} MB".format(max_mem_used / 1024))
-	
-    
-    acc = total_acc / total_count
-    loss = total_loss / total_count
-    print("loss: {} acc {}".format(loss, acc))
+"""	
 
 def main():
     if len(sys.argv) > 1:

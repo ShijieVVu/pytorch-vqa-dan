@@ -61,13 +61,13 @@ class MovieQADataset(object):
         if self.shuffle:
             random.shuffle(order)
 
-        batch_question = []
-        batch_subtitles = []
-        batch_answers = []
-        batch_correct_index = []
      
         for start_idx in range(0, len(self.qids), self.batch_size):
             end_idx = min(start_idx + self.batch_size, len(self.qids))
+            batch_question = []
+            batch_subtitles = []
+            batch_answers = []
+            batch_correct_index = []
             for idx in range(start_idx, end_idx):
                 order_idx = order[idx]
                 question, subtitles, answers, correct_idx = self.__getitem__(order_idx)

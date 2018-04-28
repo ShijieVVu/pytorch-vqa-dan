@@ -25,8 +25,8 @@ max_answers = 3000
 movie_answer_size = 5
 
 # training config
-epochs = 50
-batch_size = 16
+epochs = 20
+batch_size = 32
 initial_lr = 1e-3  # default Adam lr
 lr_halflife = 50000  # in iterations
 data_workers = 8
