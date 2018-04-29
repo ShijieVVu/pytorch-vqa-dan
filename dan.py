@@ -178,12 +178,22 @@ class SubtitleEncoder(nn.Module):
         return x7
 
 class ScoreModel(nn.Module):
-    def __init__(self):
+    def __init__(self, hidden_size):
         super(ScoreModel, self).__init__()
-        
+        self.fc1 = nn.Linear(in_features=3 * hidden_size, out_features=hidden_size)
+        self.fc2 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
+        self.fc3 = nn.Linear(in_features=hidden_size, out_features=1)
 
-    def forward(self, memory, list_answers):
-        pass
+    def forward(self, memory, answer_feature):
+        scores_options = []
+        for answer in answer_feature:
+            x = F.relu(self.fc1(torch.cat([memory, answer])))
+            x = F.relu(self.fc2(x))
+            score = self.fc3(x)
+            scores_options.append(score)
+        scores = torch.stack(scores_options)
+        return scores
+            
 
 class MovieDAN(nn.Module):
     def __init__(self, num_embeddings, embedding_dim, hidden_size, answer_size, k=2):
@@ -229,7 +239,7 @@ class MovieDAN(nn.Module):
         self.k = k
 
         # scoring model
-        self.score_model = ScoreModel()
+        self.score_model = ScoreModel(hidden_size)
 
     def forward(self, question, subtitles, list_answers):
         # Prepare Question Features
@@ -254,11 +264,7 @@ class MovieDAN(nn.Module):
    
             # Build Memory
             memory = memory + q * s
-        '''
-        import pdb; pdb.set_trace()
-        scores = self.score_model(memory, list_answers)
-        import pdb; pdb.set_trace()
-        '''
+
         # ( batch_size, memory_size )
         # We compute scores using a classifier
         list_answer_features = []
@@ -267,21 +273,12 @@ class MovieDAN(nn.Module):
             list_answer_features.append(features)
               
         answer_features = torch.stack(list_answer_features) #(batch_size, answer_size, hidden_size)
-      
-        batch_size, memory_size = memory.shape
-        batch_size, answer_size, hidden_size = answer_features.shape
-        
-	# memory: (batch_size, memory_size)
-        # ( batch_size, hidden_size )
-        # Bilinear scoring
-        memory = memory.unsqueeze(1) # (batch_size, answer_size, memory_size)
-        memory = memory.expand(batch_size, answer_size, memory_size)
-        memory = memory.contiguous().view(-1, memory_size) # batch_size * answer_size, memory_size
-        
-        answer_features = answer_features.view(-1, hidden_size) # batch_size * answer_size, hidden_size)
 
-        scores = self.scoring(memory.view(-1,memory_size), answer_features.view(-1, hidden_size))
-        scores = scores.view(batch_size, answer_size)
+        scores_list = []
+        for idx, answer_feature in enumerate(answer_features, 0):
+            score = self.score_model(memory[idx], answer_feature)
+            scores_list.append(score)
+        scores = torch.squeeze(torch.stack(scores_list))
         return scores
 
 if __name__ == "__main__":
