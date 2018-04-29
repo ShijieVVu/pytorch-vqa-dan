@@ -82,17 +82,16 @@ class MovieQADataset(object):
                 batch_answers.append(answers)
                 batch_correct_index.append(correct_idx)
 
-                import pdb; pdb.set_trace()
                 video_names = self.q_clips[self.qids[order_idx]]
                 ### for debugging purpose ###
-                video_names = ['tt0086879.sf-211630.ef-217006.video.mp4', 'tt0125439.sf-016072.ef-016235.video.mp4']
+                video_names = random.sample(['tt0086879.sf-211630.ef-217006.video.mp4', 'tt0125439.sf-016072.ef-016235.video.mp4', 'tt0373889.sf-178244.ef-178933.video.mp4', 'tt1270798.sf-066306.ef-069733.video.mp4', 'tt0412019.sf-118504.ef-121216.video.mp4', 'tt1499658.sf-008895.ef-011364.video.mp4'], random.choice([1, 2, 3, 4]))
                 audio = []
                 for name in video_names:
                     af = np.load("{}/{}{}".format(self.audio_base, name, self.postfix))
                     af = af[:, ::50]
                     audio.append(af)
-                np.concatenate(audio, axis=1)
-                batch_audio.append(audio)
+                audio1 = np.concatenate(audio, axis=1).tolist()
+                batch_audio.append(audio1)
 
             # ( seq_len, batch_size )
             tensor_question = pad_longest(batch_question)
@@ -102,9 +101,9 @@ class MovieQADataset(object):
             tensor_correct_index = torch.LongTensor(batch_correct_index)
 
             import pdb; pdb.set_trace()
-            tensor_audio = pad_longest(batch_audio)
+            tensor_audio = torch.stack([pad_longest(list(v)) for v in zip(*batch_audio)]).permute(1, 0, 2)
 
-            yield tensor_question, tensor_subtitles, list_tensor_answer, tensor_correct_index
+            yield tensor_question, tensor_audio, tensor_subtitles, list_tensor_answer, tensor_correct_index
 
 if __name__ == "__main__":
     pass

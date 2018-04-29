@@ -41,25 +41,21 @@ def run(net, dataset, optimizer, train=False, prefix='', epoch=0):
     total_loss = 0
     total_iterations = 0
     
-    for q, s, la, c in tq:
+    for q, au, s, la, c in tq:
         var_params = {
             'requires_grad': False,
         }
-#        q = Variable(q.cuda(async=True))
-#       	s = Variable(s.cuda(async=True))
-#        la = [ Variable(a.cuda(async=True)) for a in la ]
-#        c = Variable(c.cuda(async=False)) # correct answers
+        q = Variable(q.cuda())
+        import pdb; pdb.set_trace()
+        au = Variable(au.cuda())
+       	s = Variable(s.cuda())
+        la = [ Variable(a.cuda()) for a in la ]
+        c = Variable(c.cuda()) # correct answers
 
-        q = Variable(q).cuda()
-       	s = Variable(s).cuda()
-        la = [Variable(a).cuda() for a in la]
-        c = Variable(c).cuda() # correct answers
-
-#        import pdb; pdb.set_trace()
-        out = net(q, s, la)
+        import pdb; pdb.set_trace()
+        out = net(q, au, s, la)
         loss = criterion(out, c)
 
-     
         # Compute our own accuracy
         _, pred = out.data.max(dim=1)
         acc = (pred == c.data).float()
