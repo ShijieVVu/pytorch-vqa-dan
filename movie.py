@@ -83,8 +83,6 @@ class MovieQADataset(object):
                 batch_correct_index.append(correct_idx)
 
                 video_names = self.q_clips[self.qids[order_idx]]
-                ### for debugging purpose ###
-                video_names = random.sample(['tt0086879.sf-211630.ef-217006.video.mp4', 'tt0125439.sf-016072.ef-016235.video.mp4', 'tt0373889.sf-178244.ef-178933.video.mp4', 'tt1270798.sf-066306.ef-069733.video.mp4', 'tt0412019.sf-118504.ef-121216.video.mp4', 'tt1499658.sf-008895.ef-011364.video.mp4'], random.choice([1, 2, 3, 4]))
                 audio = []
                 for name in video_names:
                     af = np.load("{}{}{}".format(self.audio_base, name[:name.find('.video')], self.postfix))
