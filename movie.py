@@ -44,6 +44,11 @@ class MovieQADataset(object):
 
         self.vocab = vocab
 
+        self.q_clips = pickle.load(open('./movieqa/q_clips.p', 'rb'))
+        # change this to your audio base
+        self.audio_base = '/home/shijie/Downloads/features/features/melspectrogram_128/all_video_clips'
+        self.postfix = '.orig.spec.npy'
+
     def __len__(self):
         return len(self.qids)
 
@@ -65,6 +70,7 @@ class MovieQADataset(object):
         for start_idx in range(0, len(self.qids), self.batch_size):
             end_idx = min(start_idx + self.batch_size, len(self.qids))
             batch_question = []
+            batch_audio = []
             batch_subtitles = []
             batch_answers = []
             batch_correct_index = []
@@ -76,11 +82,27 @@ class MovieQADataset(object):
                 batch_answers.append(answers)
                 batch_correct_index.append(correct_idx)
 
+                import pdb; pdb.set_trace()
+                video_names = self.q_clips[self.qids[order_idx]]
+                ### for debugging purpose ###
+                video_names = ['tt0086879.sf-211630.ef-217006.video.mp4', 'tt0125439.sf-016072.ef-016235.video.mp4']
+                audio = []
+                for name in video_names:
+                    af = np.load("{}/{}{}".format(self.audio_base, name, self.postfix))
+                    af = af[:, ::50]
+                    audio.append(af)
+                np.concatenate(audio, axis=1)
+                batch_audio.append(audio)
+
             # ( seq_len, batch_size )
             tensor_question = pad_longest(batch_question)
             tensor_subtitles = pad_longest(batch_subtitles)
+            
             list_tensor_answer = [ pad_longest(a) for a in batch_answers ]
             tensor_correct_index = torch.LongTensor(batch_correct_index)
+
+            import pdb; pdb.set_trace()
+            tensor_audio = pad_longest(batch_audio)
 
             yield tensor_question, tensor_subtitles, list_tensor_answer, tensor_correct_index
 
