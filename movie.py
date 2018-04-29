@@ -47,7 +47,9 @@ class MovieQADataset(object):
         self.q_clips = pickle.load(open('./movieqa/q_clips.p', 'rb'))
         # change this to your audio base
         self.audio_base = '/home/shijie/Downloads/features/sound_out_all/conv_14/tf_feat_'
-        self.postfix = '.video_14.npy'
+        self.audio_postfix = '.video_14.npy'
+        self.video_base = '/media/shijie/Users/WUSHI/github/Multiple-Attention-Model-for-MovieQA/data/data_processed/'
+        self.video_postfix = '.video.mp4features.p'
 
     def __len__(self):
         return len(self.qids)
@@ -71,6 +73,7 @@ class MovieQADataset(object):
             end_idx = min(start_idx + self.batch_size, len(self.qids))
             batch_question = []
             batch_audio = []
+            batch_images = []
             batch_subtitles = []
             batch_answers = []
             batch_correct_index = []
@@ -83,16 +86,21 @@ class MovieQADataset(object):
                 batch_correct_index.append(correct_idx)
 
                 video_names = self.q_clips[self.qids[order_idx]]
-                ### for debugging purpose ###
-                video_names = random.sample(['tt0086879.sf-211630.ef-217006.video.mp4', 'tt0125439.sf-016072.ef-016235.video.mp4', 'tt0373889.sf-178244.ef-178933.video.mp4', 'tt1270798.sf-066306.ef-069733.video.mp4', 'tt0412019.sf-118504.ef-121216.video.mp4', 'tt1499658.sf-008895.ef-011364.video.mp4'], random.choice([1, 2, 3, 4]))
                 audio = []
+                video = []
                 for name in video_names:
-                    af = np.load("{}{}{}".format(self.audio_base, name[:name.find('.video')], self.postfix))
+                    af = np.load("{}{}{}".format(self.audio_base, name[:name.find('.video')], self.audio_postfix))
                     
                     af = af.T[:, ::40]
                     audio.append(af)
+                    vf = np.load("{}{}{}".format(self.video_base, name[:name.find('.video')], self.video_postfix))
+                    vf = vf.reshape(-1, 512)
+                    vf = vf.T[:, ::50]
+                    video.append(vf)
                 audio1 = np.concatenate(audio, axis=1).tolist()
+                video1 = np.concatenate(video, axis=1).tolist()
                 batch_audio.append(audio1)
+                batch_images.append(video1)
 
             # ( seq_len, batch_size )
             tensor_question = pad_longest(batch_question)
@@ -100,8 +108,9 @@ class MovieQADataset(object):
             
             list_tensor_answer = [ pad_longest(a) for a in batch_answers ]
             tensor_correct_index = torch.LongTensor(batch_correct_index)
-
+            import pdb; pdb.set_trace()
             tensor_audio = torch.stack([pad_longest(list(v)) for v in zip(*batch_audio)]).permute(1, 0, 2)
+            tensor_images = torch.stack([pad_longest(list(v)) for v in zip(*batch_images)]).permute(1, 0, 2)
 
             yield tensor_question, tensor_audio, tensor_subtitles, list_tensor_answer, tensor_correct_index
 
