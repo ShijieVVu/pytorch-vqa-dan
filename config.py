@@ -30,4 +30,4 @@ batch_size = 16
 initial_lr = 1e-3  # default Adam lr
 lr_halflife = 50000  # in iterations
 data_workers = 8
-
+run_number='audio_1'
