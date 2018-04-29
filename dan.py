@@ -200,16 +200,18 @@ class AudioEncoder(nn.Module):
 class ScoreModel(nn.Module):
     def __init__(self, hidden_size):
         super(ScoreModel, self).__init__()
+        '''
         self.fc1 = nn.Linear(in_features=3 * hidden_size, out_features=hidden_size)
         self.fc2 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
         self.fc3 = nn.Linear(in_features=hidden_size, out_features=1)
-
+        '''
+        self.fc = nn.Sequential(
+            nn.Linear(3*hidden_size, 1),
+            )
     def forward(self, memory, answer_feature):
         scores_options = []
         for answer in answer_feature:
-            x = F.relu(self.fc1(torch.cat([memory, answer])))
-            x = F.relu(self.fc2(x))
-            score = self.fc3(x)
+            score = F.relu(self.fc(torch.cat([memory, answer])))
             scores_options.append(score)
         scores = torch.stack(scores_options)
         return scores
