@@ -163,15 +163,16 @@ class SubtitleEncoder(nn.Module):
         self.pool1 = nn.MaxPool2d(2, 2)
         self.conv2 = nn.Conv2d(4, 9, 5)
         self.pool2 = nn.MaxPool2d(2, 2)
+        self.dropout = nn.Dropout(p=0.5)
 
     def forward(self, subtitles):
         # Define Forward params here
         x0 = subtitles.permute(1, 0)
         x1 = self.embed(x0)
         x2 = self.conv1(x1.unsqueeze(1))
-        x3 = self.pool1(x2)
+        x3 = F.relu(self.pool1(x2))
         x4 = self.conv2(x3)
-        x5 = self.pool2(x4)
+        x5 = self.dropout(F.relu(self.pool2(x4)))
         x6 = x5.permute(2, 0, 1, 3)
         bs = subtitles.size()[1]
         x7 = x6.contiguous().view(x6.size()[0], bs, -1)
@@ -196,6 +197,22 @@ class AudioEncoder(nn.Module):
         x6 = x5.contiguous().view(x5.size()[0], bs, -1)
         return x6
         
+class ScoreModel(nn.Module):
+    def __init__(self, hidden_size):
+        super(ScoreModel, self).__init__()
+        self.fc1 = nn.Linear(in_features=3 * hidden_size, out_features=hidden_size)
+        self.fc2 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
+        self.fc3 = nn.Linear(in_features=hidden_size, out_features=1)
+
+    def forward(self, memory, answer_feature):
+        scores_options = []
+        for answer in answer_feature:
+            x = F.relu(self.fc1(torch.cat([memory, answer])))
+            x = F.relu(self.fc2(x))
+            score = self.fc3(x)
+            scores_options.append(score)
+        scores = torch.stack(scores_options)
+        return scores
 
 class MovieDAN(nn.Module):
     def __init__(self, num_embeddings, embedding_dim, hidden_size, answer_size, k=2):
@@ -245,6 +262,9 @@ class MovieDAN(nn.Module):
         # Loops
         self.k = k
 
+        # scoring model
+        self.score_model = ScoreModel(hidden_size)
+
     def forward(self, question, audios, subtitles, list_answers):
         # Prepare Question Features
         qts = self.textencoder.forward(question) # (seq_len, batch_size, dim)
@@ -277,31 +297,21 @@ class MovieDAN(nn.Module):
             a_qa = 1/3
             a_sa = 1/3
             memory = memory + a_qa * q * s + a_qa * q * a + a_sa * s * a
-            
+
         # ( batch_size, memory_size )
         # We compute scores using a classifier
         list_answer_features = []
         for answers in list_answers:
             features = self.answerencoder.forward(answers)
             list_answer_features.append(features)
-        
-      
+              
         answer_features = torch.stack(list_answer_features) #(batch_size, answer_size, hidden_size)
-      
-        batch_size, memory_size = memory.shape
-        batch_size, answer_size, hidden_size = answer_features.shape
-        
-	# memory: (batch_size, memory_size)
-        # ( batch_size, hidden_size )
-        # Bilinear scoring
-        memory = memory.unsqueeze(1) # (batch_size, answer_size, memory_size)
-        memory = memory.expand(batch_size, answer_size, memory_size)
-        memory = memory.contiguous().view(-1, memory_size) # batch_size * answer_size, memory_size
-        
-        answer_features = answer_features.view(-1, hidden_size) # batch_size * answer_size, hidden_size)
 
-        scores = self.scoring(memory.view(-1,memory_size), answer_features.view(-1, hidden_size))
-        scores = scores.view(batch_size, answer_size)
+        scores_list = []
+        for idx, answer_feature in enumerate(answer_features, 0):
+            score = self.score_model(memory[idx], answer_feature)
+            scores_list.append(score)
+        scores = torch.squeeze(torch.stack(scores_list))
         return scores
 
 if __name__ == "__main__":

@@ -73,22 +73,8 @@ def run(net, dataset, optimizer, train=False, prefix='', epoch=0):
     acc = total_acc / total_count
     loss = total_loss / total_count
     print("loss: {} acc {}".format(loss, acc))
-"""
-        for obj in gc.get_objects():
-            try:
-                if torch.is_tensor(obj) or (hasattr(obj, 'data') and torch.is_tensor(obj.data)):
-                    pass
-                    #print(type(obj), obj.size())
-            except:
-                pass
+    return acc
 
-        gc.collect()
-        import pdb; pdb.set_trace()
-       
-        if total_iterations % 5 == 0:
-            max_mem_used = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-#            print("{:.2f} MB".format(max_mem_used / 1024))
-"""	
 
 def main():
     if len(sys.argv) > 1:
@@ -117,9 +103,14 @@ def main():
 
     config_as_dict = {k: v for k, v in vars(config).items() if not k.startswith('__')}
 
+    prev_acc = -1
     for i in range(config.epochs):
         run(net, train_dataset, optimizer, train=True, prefix='train', epoch=i)
-        run(net, val_dataset, optimizer, train=False, prefix='val', epoch=i)
+        acc = run(net, val_dataset, optimizer, train=False, prefix='val', epoch=i)
+        if acc > prev_acc:
+            torch.save(model.state_dict(), "./model/dan-E{:02d}-A{:.3f}.pt".format(i, acc))
+            print("model saved")
+            prev_acc = acc
 
 if __name__ == '__main__':
     main()
