@@ -95,7 +95,7 @@ class MovieQADataset(object):
                     audio.append(af)
                     vf = np.load("{}{}{}".format(self.video_base, name[:name.find('.video')], self.video_postfix))
                     vf = vf.reshape(-1, 512)
-                    vf = vf.T[:, ::50]
+                    vf = vf.T[:, ::100]
                     video.append(vf)
                 audio1 = np.concatenate(audio, axis=1).tolist()
                 video1 = np.concatenate(video, axis=1).tolist()

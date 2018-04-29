@@ -243,7 +243,7 @@ class ScoreModel(nn.Module):
         return scores
 
 class MovieDAN(nn.Module):
-    def __init__(self, num_embeddings, embedding_dim, hidden_size, answer_size, k=2):
+    def __init__(self, num_embeddings, embedding_dim, hidden_size, answer_size, weight_qv, weight_qs, weight_qa, k=2):
         super(MovieDAN, self).__init__()
          # Build Text Encoder
          # This encoder will encode all text
@@ -298,6 +298,11 @@ class MovieDAN(nn.Module):
         # scoring model
         self.score_model = ScoreModel(hidden_size)
 
+        # weights
+        self.weight_qv = weight_qv
+        self.weight_qa = weight_qa
+        self.weight_qs = weight_qs
+
     def forward(self, question, images, audios, subtitles, list_answers):
         # Prepare Question Features
         qts = self.textencoder.forward(question) # (seq_len, batch_size, dim)
@@ -305,16 +310,12 @@ class MovieDAN(nn.Module):
         ats = self.audioencoder.forward(audios)
         vts = self.videoencoder.forward(images)
 
-        a_qs = 1/3
-        a_qa = 1/3
-        a_qv = 1/3
-        
         # Initialize Memory
         q = qts.mean(0)
         s = self.tanh(self.Ps(sts.mean(0)))
         a = self.tanh(self.Pa(ats.mean(0)))
         v = self.tanh(self.Pv(vts.mean(0)))
-        memory = a_qs * q * s + a_qa * q * a + a_qv * q * v
+        memory = self.weight_qs * q * s + self.weight_qa * q * a + self.weight_qv * q * v
 
         # K indicates the number of hops
         for k in range(self.k):
@@ -336,7 +337,7 @@ class MovieDAN(nn.Module):
             v = (self.tanh(self.Pv(alphaV * vts))).sum(0)
    
             # Build Memory
-            memory = a_qs * q * s + a_qa * q * a + a_qv * q * v
+            memory = self.weight_qs * q * s + self.weight_qa * q * a + self.weight_qv * q * v
 
         # ( batch_size, memory_size )
         # We compute scores using a classifier

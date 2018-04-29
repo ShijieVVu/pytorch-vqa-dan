@@ -93,10 +93,15 @@ def main():
     
     # Build Model
     vocab_size = len(train_dataset.vocab)
-    model = MovieDAN(num_embeddings=vocab_size, 
-                embedding_dim=config.embedding_dim, 
-                hidden_size=config.hidden_size, 
-                answer_size=config.movie_answer_size)
+    model = MovieDAN(num_embeddings=vocab_size,
+                     embedding_dim=config.embedding_dim,
+                     hidden_size=config.hidden_size, 
+                     answer_size=config.movie_answer_size,
+                     weight_qv=config.weight_qv,
+                     weight_qs=config.weight_qs,
+                     weight_qa=config.weight_qa,
+                     k=config.k
+    )
 
     net = nn.DataParallel(model).cuda()
     
