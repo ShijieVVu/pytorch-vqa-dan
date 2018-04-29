@@ -163,18 +163,27 @@ class SubtitleEncoder(nn.Module):
         self.pool1 = nn.MaxPool2d(2, 2)
         self.conv2 = nn.Conv2d(4, 9, 5)
         self.pool2 = nn.MaxPool2d(2, 2)
+        self.dropout = nn.Dropout(p=0.5)
 
     def forward(self, subtitles):
         # Define Forward params here
         x0 = subtitles.permute(1, 0)
         x1 = self.embed(x0)
         x2 = self.conv1(x1.unsqueeze(1))
-        x3 = self.pool1(x2)
+        x3 = F.relu(self.pool1(x2))
         x4 = self.conv2(x3)
-        x5 = self.pool2(x4)
+        x5 = self.dropout(F.relu(self.pool2(x4)))
         x6 = x5.permute(2, 0, 1, 3)
         x7 = x6.contiguous().view(x6.size()[0], subtitles.size()[1], -1)
         return x7
+
+class ScoreModel(nn.Module):
+    def __init__(self):
+        super(ScoreModel, self).__init__()
+        
+
+    def forward(self, memory, list_answers):
+        pass
 
 class MovieDAN(nn.Module):
     def __init__(self, num_embeddings, embedding_dim, hidden_size, answer_size, k=2):
@@ -219,6 +228,9 @@ class MovieDAN(nn.Module):
         # Loops
         self.k = k
 
+        # scoring model
+        self.score_model = ScoreModel()
+
     def forward(self, question, subtitles, list_answers):
         # Prepare Question Features
         qts = self.textencoder.forward(question) # (seq_len, batch_size, dim)
@@ -242,15 +254,18 @@ class MovieDAN(nn.Module):
    
             # Build Memory
             memory = memory + q * s
-            
+        '''
+        import pdb; pdb.set_trace()
+        scores = self.score_model(memory, list_answers)
+        import pdb; pdb.set_trace()
+        '''
         # ( batch_size, memory_size )
         # We compute scores using a classifier
         list_answer_features = []
         for answers in list_answers:
             features = self.answerencoder.forward(answers)
             list_answer_features.append(features)
-        
-      
+              
         answer_features = torch.stack(list_answer_features) #(batch_size, answer_size, hidden_size)
       
         batch_size, memory_size = memory.shape
