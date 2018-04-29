@@ -32,7 +32,13 @@ lr_halflife = 50000  # in iterations
 data_workers = 8
 
 # model specification
+sub_out = 261
+audio_out = 261
+video_out = 1125
+
 weight_qv = 1/3
 weight_qs = 1/3
 weight_qa = 1/3
 k = 2
+
+name = 'video-audio'

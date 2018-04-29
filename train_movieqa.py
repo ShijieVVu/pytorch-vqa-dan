@@ -100,6 +100,9 @@ def main():
                      weight_qv=config.weight_qv,
                      weight_qs=config.weight_qs,
                      weight_qa=config.weight_qa,
+                     sub_out=config.sub_out,
+                     audio_out=config.audio_out,
+                     video_out=config.video_out,
                      k=config.k
     )
 
@@ -114,7 +117,10 @@ def main():
         run(net, train_dataset, optimizer, train=True, prefix='train', epoch=i)
         acc = run(net, val_dataset, optimizer, train=False, prefix='val', epoch=i)
         if acc > prev_acc:
-            torch.save(model.state_dict(), "./model/dan-audio-E{:02d}-A{:.3f}.pt".format(i, acc))
+            directory = './model_{}'/format(config.name)
+            if not os.path.exists(di):
+                os.makedirs()
+            torch.save(model.state_dict(), "./model_{}/dan-audio-E{:02d}-A{:.3f}.pt".format(config.name, i, acc))
             print("model saved")
             prev_acc = acc
 

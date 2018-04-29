@@ -243,7 +243,7 @@ class ScoreModel(nn.Module):
         return scores
 
 class MovieDAN(nn.Module):
-    def __init__(self, num_embeddings, embedding_dim, hidden_size, answer_size, weight_qv, weight_qs, weight_qa, k=2):
+    def __init__(self, num_embeddings, embedding_dim, hidden_size, answer_size, weight_qv, weight_qs, weight_qa, sub_out, audio_out, video_out, k=2):
         super(MovieDAN, self).__init__()
          # Build Text Encoder
          # This encoder will encode all text
@@ -260,9 +260,9 @@ class MovieDAN(nn.Module):
         
         # Visual Attention
 #        self.attnV = Attention(2048, hidden_size)
-        self.Ps = nn.Linear(in_features=261, out_features=memory_size)
-        self.Pa = nn.Linear(in_features=261, out_features=memory_size)
-        self.Pv = nn.Linear(in_features=1125, out_features=memory_size)
+        self.Ps = nn.Linear(in_features=sub_out, out_features=memory_size)
+        self.Pa = nn.Linear(in_features=audio_out, out_features=memory_size)
+        self.Pv = nn.Linear(in_features=video_out, out_features=memory_size)
     
         # Question Attention
         self.attnQ = Attention(memory_size, hidden_size)
