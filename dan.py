@@ -196,6 +196,32 @@ class AudioEncoder(nn.Module):
         bs = audios.size()[2]
         x6 = x5.contiguous().view(x5.size()[0], bs, -1)
         return x6
+
+class VideoEncoder(nn.Module):
+    def __init__(self):
+        super(VideoEncoder, self).__init__()
+        self.conv1 = nn.Conv2d(1, 4, 5)
+        self.pool1 = nn.MaxPool2d(2, 2)
+        self.conv2 = nn.Conv2d(4, 9, 5)
+        self.pool2 = nn.MaxPool2d(2, 2)
+        self.conv3 = nn.Conv2d(9, 16, 5)
+        self.pool3 = nn.MaxPool2d(2, 2)
+
+    def forward(self, images):
+        x = images.permute(2, 0, 1).float()
+        x = self.conv1(x.unsqueeze(1))
+        x = self.pool1(x)
+        x = self.conv2(x)
+        x = self.pool2(x)
+        '''
+        x = self.conv3(x)
+        x = self.pool3(x)
+        '''
+        x = x.permute(2, 0, 1, 3)
+        bs = images.size()[2]
+        x = x.contiguous().view(x.size()[0], bs, -1)
+        return x
+        
         
 class ScoreModel(nn.Module):
     def __init__(self, hidden_size):
@@ -228,13 +254,15 @@ class MovieDAN(nn.Module):
 	# Share Embedding Matrix
         self.subtitleencoder = SubtitleEncoder(self.textencoder.embed)
         self.audioencoder = AudioEncoder()
+        self.videoencoder = VideoEncoder()
 
         memory_size = 2 * hidden_size # bidirectional
         
         # Visual Attention
 #        self.attnV = Attention(2048, hidden_size)
-        self.P = nn.Linear(in_features=261, out_features=memory_size)
-        self.P1 = nn.Linear(in_features=261, out_features=memory_size)
+        self.Ps = nn.Linear(in_features=261, out_features=memory_size)
+        self.Pa = nn.Linear(in_features=261, out_features=memory_size)
+        self.Pv = nn.Linear(in_features=1125, out_features=memory_size)
     
         # Question Attention
         self.attnQ = Attention(memory_size, hidden_size)
@@ -244,6 +272,9 @@ class MovieDAN(nn.Module):
 
         # Audio Attention
         self.attnA = Attention(261, hidden_size)
+
+        # Video Attention
+        self.attnV = Attention(1125, hidden_size)
 
         # Answer Encoder
         self.answerencoder = AnswerEncoder(num_embeddings=num_embeddings, 
@@ -267,17 +298,23 @@ class MovieDAN(nn.Module):
         # scoring model
         self.score_model = ScoreModel(hidden_size)
 
-    def forward(self, question, audios, subtitles, list_answers):
+    def forward(self, question, images, audios, subtitles, list_answers):
         # Prepare Question Features
         qts = self.textencoder.forward(question) # (seq_len, batch_size, dim)
         sts = self.subtitleencoder.forward(subtitles) #
         ats = self.audioencoder.forward(audios)
+        vts = self.videoencoder.forward(images)
+
+        a_qs = 1/3
+        a_qa = 1/3
+        a_qv = 1/3
         
         # Initialize Memory
         q = qts.mean(0)
-        s = self.tanh(self.P(sts.mean(0)))
-        a = self.tanh(self.P1(ats.mean(0)))
-        memory = q * s / 3 + q * a / 3 + s * a / 3
+        s = self.tanh(self.Ps(sts.mean(0)))
+        a = self.tanh(self.Pa(ats.mean(0)))
+        v = self.tanh(self.Pv(vts.mean(0)))
+        memory = a_qs * q * s + a_qa * q * a + a_qv * q * v
 
         # K indicates the number of hops
         for k in range(self.k):
@@ -288,17 +325,18 @@ class MovieDAN(nn.Module):
 
             # Subtitle Attention
             alphaS = self.attnS(sts, memory)
-            s = (self.tanh(self.P(alphaS * sts))).sum(0)
+            s = (self.tanh(self.Ps(alphaS * sts))).sum(0)
 
             # Audio Attention
             alphaA = self.attnA(ats, memory)
-            a = (self.tanh(self.P1(alphaA * ats))).sum(0)
+            a = (self.tanh(self.Pa(alphaA * ats))).sum(0)
+
+            # Video Attention
+            alphaV = self.attnV(vts, memory)
+            v = (self.tanh(self.Pv(alphaV * vts))).sum(0)
    
             # Build Memory
-            a_qs = 1/3
-            a_qa = 1/3
-            a_sa = 1/3
-            memory = memory + a_qa * q * s + a_qa * q * a + a_sa * s * a
+            memory = a_qs * q * s + a_qa * q * a + a_qv * q * v
 
         # ( batch_size, memory_size )
         # We compute scores using a classifier

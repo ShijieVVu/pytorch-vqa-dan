@@ -108,11 +108,10 @@ class MovieQADataset(object):
             
             list_tensor_answer = [ pad_longest(a) for a in batch_answers ]
             tensor_correct_index = torch.LongTensor(batch_correct_index)
-            import pdb; pdb.set_trace()
             tensor_audio = torch.stack([pad_longest(list(v)) for v in zip(*batch_audio)]).permute(1, 0, 2)
             tensor_images = torch.stack([pad_longest(list(v)) for v in zip(*batch_images)]).permute(1, 0, 2)
 
-            yield tensor_question, tensor_audio, tensor_subtitles, list_tensor_answer, tensor_correct_index
+            yield tensor_question, tensor_images, tensor_audio, tensor_subtitles, list_tensor_answer, tensor_correct_index
 
 if __name__ == "__main__":
     pass

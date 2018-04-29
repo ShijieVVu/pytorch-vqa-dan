@@ -41,17 +41,18 @@ def run(net, dataset, optimizer, train=False, prefix='', epoch=0):
     total_loss = 0
     total_iterations = 0
     
-    for q, au, s, la, c in tq:
+    for q, v, au, s, la, c in tq:
         var_params = {
             'requires_grad': False,
         }
         q = Variable(q.cuda())
+        v = Variable(v.cuda())
         au = Variable(au.cuda())
        	s = Variable(s.cuda())
         la = [ Variable(a.cuda()) for a in la ]
         c = Variable(c.cuda()) # correct answers
 
-        out = net(q, au, s, la)
+        out = net(q, v, au, s, la)
         loss = criterion(out, c)
 
         # Compute our own accuracy
