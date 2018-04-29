@@ -108,7 +108,7 @@ def main():
         run(net, train_dataset, optimizer, train=True, prefix='train', epoch=i)
         acc = run(net, val_dataset, optimizer, train=False, prefix='val', epoch=i)
         if acc > prev_acc:
-            torch.save(model.state_dict(), "./model/dan-E{:02d}-A{:.3f}.pt".format(i, acc))
+            torch.save(model.state_dict(), "./model/dan-audio-E{:02d}-A{:.3f}.pt".format(i, acc))
             print("model saved")
             prev_acc = acc
 
