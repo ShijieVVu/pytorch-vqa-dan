@@ -173,8 +173,29 @@ class SubtitleEncoder(nn.Module):
         x4 = self.conv2(x3)
         x5 = self.pool2(x4)
         x6 = x5.permute(2, 0, 1, 3)
-        x7 = x6.contiguous().view(x6.size()[0], subtitles.size()[1], -1)
+        bs = subtitles.size()[1]
+        x7 = x6.contiguous().view(x6.size()[0], bs, -1)
         return x7
+
+class AudioEncoder(nn.Module):
+    def __init__(self):
+        super(AudioEncoder, self).__init__()
+        self.conv1 = nn.Conv2d(1, 4, 5)
+        self.pool1 = nn.MaxPool2d(2, 2)
+        self.conv2 = nn.Conv2d(4, 9, 5)
+        self.pool2 = nn.MaxPool2d(2, 2)
+
+    def forward(self, audios):
+        x0 = audios.permute(2, 0, 1).float()
+        x1 = self.conv1(x0.unsqueeze(1))
+        x2 = self.pool1(x1)
+        x3 = self.conv2(x2)
+        x4 = self.pool2(x3)
+        x5 = x4.permute(2, 0, 1, 3)
+        bs = audios.size()[2]
+        x6 = x5.contiguous().view(x5.size()[0], bs, -1)
+        return x6
+        
 
 class MovieDAN(nn.Module):
     def __init__(self, num_embeddings, embedding_dim, hidden_size, answer_size, k=2):
@@ -187,18 +208,23 @@ class MovieDAN(nn.Module):
 
 	# Share Embedding Matrix
         self.subtitleencoder = SubtitleEncoder(self.textencoder.embed)
+        self.audioencoder = AudioEncoder()
 
         memory_size = 2 * hidden_size # bidirectional
         
         # Visual Attention
 #        self.attnV = Attention(2048, hidden_size)
         self.P = nn.Linear(in_features=261, out_features=memory_size)
+        self.P1 = nn.Linear(in_features=261, out_features=memory_size)
     
         # Question Attention
         self.attnQ = Attention(memory_size, hidden_size)
 
         # Subtitle Attention
         self.attnS = Attention(261, hidden_size)
+
+        # Audio Attention
+        self.attnA = Attention(261, hidden_size)
 
         # Answer Encoder
         self.answerencoder = AnswerEncoder(num_embeddings=num_embeddings, 
@@ -219,15 +245,17 @@ class MovieDAN(nn.Module):
         # Loops
         self.k = k
 
-    def forward(self, question, subtitles, list_answers):
+    def forward(self, question, audios, subtitles, list_answers):
         # Prepare Question Features
         qts = self.textencoder.forward(question) # (seq_len, batch_size, dim)
         sts = self.subtitleencoder.forward(subtitles) #
+        ats = self.audioencoder.forward(audios)
         
         # Initialize Memory
         q = qts.mean(0)
         s = self.tanh(self.P(sts.mean(0)))
-        memory = q * s
+        a = self.tanh(self.P1(ats.mean(0)))
+        memory = q * s / 3 + q * a / 3 + s * a / 3
 
         # K indicates the number of hops
         for k in range(self.k):
@@ -239,9 +267,16 @@ class MovieDAN(nn.Module):
             # Subtitle Attention
             alphaS = self.attnS(sts, memory)
             s = (self.tanh(self.P(alphaS * sts))).sum(0)
+
+            # Audio Attention
+            alphaA = self.attnA(ats, memory)
+            a = (self.tanh(self.P1(alphaA * ats))).sum(0)
    
             # Build Memory
-            memory = memory + q * s
+            a_qs = 1/3
+            a_qa = 1/3
+            a_sa = 1/3
+            memory = memory + a_qa * q * s + a_qa * q * a + a_sa * s * a
             
         # ( batch_size, memory_size )
         # We compute scores using a classifier

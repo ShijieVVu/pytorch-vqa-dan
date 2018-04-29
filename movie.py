@@ -88,7 +88,7 @@ class MovieQADataset(object):
                 audio = []
                 for name in video_names:
                     af = np.load("{}/{}{}".format(self.audio_base, name, self.postfix))
-                    af = af[:, ::50]
+                    af = af[:, ::40]
                     audio.append(af)
                 audio1 = np.concatenate(audio, axis=1).tolist()
                 batch_audio.append(audio1)
@@ -100,7 +100,6 @@ class MovieQADataset(object):
             list_tensor_answer = [ pad_longest(a) for a in batch_answers ]
             tensor_correct_index = torch.LongTensor(batch_correct_index)
 
-            import pdb; pdb.set_trace()
             tensor_audio = torch.stack([pad_longest(list(v)) for v in zip(*batch_audio)]).permute(1, 0, 2)
 
             yield tensor_question, tensor_audio, tensor_subtitles, list_tensor_answer, tensor_correct_index

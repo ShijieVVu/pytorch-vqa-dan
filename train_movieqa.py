@@ -46,13 +46,11 @@ def run(net, dataset, optimizer, train=False, prefix='', epoch=0):
             'requires_grad': False,
         }
         q = Variable(q.cuda())
-        import pdb; pdb.set_trace()
         au = Variable(au.cuda())
        	s = Variable(s.cuda())
         la = [ Variable(a.cuda()) for a in la ]
         c = Variable(c.cuda()) # correct answers
 
-        import pdb; pdb.set_trace()
         out = net(q, au, s, la)
         loss = criterion(out, c)
 
