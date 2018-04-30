@@ -43,10 +43,10 @@ use_audio = False
 
 # Weights on features
 weight_qv = 0
-weight_qs = 1/2
+weight_qs = 1
 weight_qa = 0
 
-k = 2
+k = 3
 
 # Name for model and directory
 name = 'video-audio'
