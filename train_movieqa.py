@@ -24,6 +24,17 @@ def update_learning_rate(optimizer, iteration):
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
 
+class Logger(object):
+        def __init__(self,run_number):
+                self.run_number = run_number
+                self.terminal = sys.stdout
+                self.log = open(str(run_number) , "a")
+        def write(self, message):
+                self.terminal.write(message)
+                self.log.write(message)
+        def flush(self):
+                pass
+
 def run(net, dataset, optimizer, train=False, prefix='', epoch=0):
     """ Run an epoch over the given loader """
     if train:
@@ -83,6 +94,8 @@ def main():
     else:
         from datetime import datetime
         name = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+    logall = Logger(config.run_number)
+    sys.stdout = logall
     target_name = os.path.join('logs', '{}.pth'.format(name))
     print('will save to {}'.format(target_name))
 
