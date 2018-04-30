@@ -118,8 +118,8 @@ def main():
         acc = run(net, val_dataset, optimizer, train=False, prefix='val', epoch=i)
         if acc > prev_acc:
             directory = './model_{}'.format(config.name)
-            if not os.path.exists(di):
-                os.makedirs()
+            if not os.path.exists(directory):
+                os.makedirs(directory)
             torch.save(model.state_dict(), "./model_{}/dan-audio-E{:02d}-A{:.3f}.pt".format(config.name, i, acc))
             print("model saved")
             prev_acc = acc

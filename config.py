@@ -36,13 +36,17 @@ sub_out = 261
 audio_out = 549
 video_out = 1125
 
+# Load these features or not
 use_video = False
 use_subtitle = True
 use_audio = False
 
+# Weights on features
 weight_qv = 0
 weight_qs = 1/2
 weight_qa = 0
+
 k = 2
 
+# Name for model and directory
 name = 'video-audio'
