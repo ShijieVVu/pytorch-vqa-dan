@@ -360,7 +360,7 @@ class MovieDAN(nn.Module):
                 v = 0
                 
             # Build Memory
-            memory = self.weight_qs * q * s + self.weight_qa * q * a + self.weight_qv * q * v
+            memory = memory +  self.weight_qs * q * s + self.weight_qa * q * a + self.weight_qv * q * v
 
         # ( batch_size, memory_size )
         # We compute scores using a classifier
