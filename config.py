@@ -38,15 +38,16 @@ video_out = 1125
 
 # Load these features or not
 use_video = False
-use_subtitle = True
-use_audio = False
+use_subtitle = False
+use_audio = True
 
 # Weights on features
 weight_qv = 0
-weight_qs = 1/2
-weight_qa = 0
+weight_qs = 0
+weight_qa = 1
 
 k = 2
 
 # Name for model and directory
-name = 'video-audio'
+name = 'audio_conv14_1e-3'
+run_number = 'audio_conv14_1e-3'
