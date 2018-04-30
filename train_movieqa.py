@@ -88,8 +88,8 @@ def main():
 
     cudnn.benchmark = True
 
-    train_dataset = movie.get_dataset(train=True)
-    val_dataset = movie.get_dataset(val=True)
+    train_dataset = movie.get_dataset(train=True, use_subtitle=config.use_subtitle, use_audio=config.use_audio, use_video=config.use_video)
+    val_dataset = movie.get_dataset(val=True, use_subtitle=config.use_subtitle, use_audio=config.use_audio, use_video=config.use_video)
     
     # Build Model
     vocab_size = len(train_dataset.vocab)
@@ -117,7 +117,7 @@ def main():
         run(net, train_dataset, optimizer, train=True, prefix='train', epoch=i)
         acc = run(net, val_dataset, optimizer, train=False, prefix='val', epoch=i)
         if acc > prev_acc:
-            directory = './model_{}'/format(config.name)
+            directory = './model_{}'.format(config.name)
             if not os.path.exists(di):
                 os.makedirs()
             torch.save(model.state_dict(), "./model_{}/dan-audio-E{:02d}-A{:.3f}.pt".format(config.name, i, acc))

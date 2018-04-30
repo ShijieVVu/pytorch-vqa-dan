@@ -13,7 +13,7 @@ def pad_longest(v, fillvalue=0):
     arr = torch.LongTensor(arr)
     return arr
 
-def get_dataset(train=False, val=False, test=False):
+def get_dataset(train=False, val=False, test=False, use_subtitle=True, use_audio=True, use_video=True):
     """ Returns a data loader for the desired split """
     assert train + val + test == 1, 'need to set exactly one of {train, val, test} to True'
     if train:
@@ -24,11 +24,11 @@ def get_dataset(train=False, val=False, test=False):
         split = 'test'
     data_pickle = './movieqa/movieqa.{}.pickle'.format(split)
     vocab_pickle = './movieqa/movieqa.vocab'
-    dataset = MovieQADataset(data_pickle, vocab_pickle, config.batch_size, shuffle=train)
+    dataset = MovieQADataset(data_pickle, vocab_pickle, config.batch_size, shuffle=train, use_subtitle=use_subtitle, use_audio=use_audio, use_video=use_video)
     return dataset
 
 class MovieQADataset(object):
-    def __init__(self, data_pickle, vocab_pickle, batch_size, shuffle=False):
+    def __init__(self, data_pickle, vocab_pickle, batch_size, use_subtitle=True, use_audio=True, use_video=True, shuffle=False):
         super(MovieQADataset, self).__init__()
         with open(data_pickle,'rb') as fin:
             data = pickle.load(fin)
@@ -46,10 +46,14 @@ class MovieQADataset(object):
 
         self.q_clips = pickle.load(open('./movieqa/q_clips.p', 'rb'))
         # change this to your audio base
-        self.audio_base = '/home/shijie/Downloads/features/sound_out_all/conv_14/tf_feat_'
-        self.audio_postfix = '.video_14.npy'
+        self.audio_base = '/home/shijie/Downloads/features/sound_out_all/conv_16/tf_feat_'
+        self.audio_postfix = '.video_16.npy'
         self.video_base = '/media/shijie/Users/WUSHI/github/Multiple-Attention-Model-for-MovieQA/data/data_processed/'
         self.video_postfix = '.video.mp4features.p'
+
+        self.use_subtitle = use_subtitle
+        self.use_audio = use_audio
+        self.use_video = use_video
 
     def __len__(self):
         return len(self.qids)
@@ -64,6 +68,10 @@ class MovieQADataset(object):
         return q, s, a, c
 
     def loader(self):
+        use_subtitle = self.use_subtitle
+        use_audio = self.use_audio
+        use_video = self.use_video
+        
         order = list(range(len(self.qids)))
         if self.shuffle:
             random.shuffle(order)
@@ -82,25 +90,47 @@ class MovieQADataset(object):
                 question, subtitles, answers, correct_idx = self.__getitem__(order_idx)
                 batch_question.append(question)
                 batch_subtitles.append(subtitles)
+
+                # Answer shuffling 
+                tp1 = []
+                for i in range(5):
+                    if i == correct_idx:
+                        tp1.append(1)
+                    else:
+                        tp1.append(0)
+                        
+                tmp = list(zip(answers, tp1))
+                random.shuffle(tmp)
+                answers = [m[0] for m in tmp]
+                
+                for i in range(5):
+                    if tmp[i][1] == 1:
+                        correct_idx = i
+                        break
+                
                 batch_answers.append(answers)
                 batch_correct_index.append(correct_idx)
 
                 video_names = self.q_clips[self.qids[order_idx]]
-                audio = []
-                video = []
-                for name in video_names:
-                    af = np.load("{}{}{}".format(self.audio_base, name[:name.find('.video')], self.audio_postfix))
+                if use_audio:
+                    audio = []
+                    for name in video_names:
+                        af = np.load("{}{}{}".format(self.audio_base, name[:name.find('.video')], self.audio_postfix))
                     
-                    af = af.T[:, ::40]
-                    audio.append(af)
-                    vf = np.load("{}{}{}".format(self.video_base, name[:name.find('.video')], self.video_postfix))
-                    vf = vf.reshape(-1, 512)
-                    vf = vf.T[:, ::100]
-                    video.append(vf)
-                audio1 = np.concatenate(audio, axis=1).tolist()
-                video1 = np.concatenate(video, axis=1).tolist()
-                batch_audio.append(audio1)
-                batch_images.append(video1)
+                        af = af.T[:, ::40]
+                        audio.append(af)
+                    audio1 = np.concatenate(audio, axis=1).tolist()
+                    batch_audio.append(audio1)
+                        
+                if use_video:
+                    video = []
+                    for name in video_names:
+                        vf = np.load("{}{}{}".format(self.video_base, name[:name.find('.video')], self.video_postfix))
+                        vf = vf.reshape(-1, 512)
+                        vf = vf.T[:, ::100]
+                        video.append(vf)
+                    video1 = np.concatenate(video, axis=1).tolist()
+                    batch_images.append(video1)
 
             # ( seq_len, batch_size )
             tensor_question = pad_longest(batch_question)
@@ -108,8 +138,14 @@ class MovieQADataset(object):
             
             list_tensor_answer = [ pad_longest(a) for a in batch_answers ]
             tensor_correct_index = torch.LongTensor(batch_correct_index)
-            tensor_audio = torch.stack([pad_longest(list(v)) for v in zip(*batch_audio)]).permute(1, 0, 2)
-            tensor_images = torch.stack([pad_longest(list(v)) for v in zip(*batch_images)]).permute(1, 0, 2)
+            
+            tensor_audio = torch.LongTensor([0])
+            if use_audio:
+                tensor_audio = torch.stack([pad_longest(list(v)) for v in zip(*batch_audio)]).permute(1, 0, 2)
+            tensor_images = torch.LongTensor([0])
+            if use_video:
+                tensor_images = torch.stack([pad_longest(list(v)) for v in zip(*batch_images)]).permute(1, 0, 2)
+
             yield tensor_question, tensor_images, tensor_audio, tensor_subtitles, list_tensor_answer, tensor_correct_index
 
 if __name__ == "__main__":

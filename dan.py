@@ -268,13 +268,13 @@ class MovieDAN(nn.Module):
         self.attnQ = Attention(memory_size, hidden_size)
 
         # Subtitle Attention
-        self.attnS = Attention(261, hidden_size)
+        self.attnS = Attention(sub_out, hidden_size)
 
         # Audio Attention
-        self.attnA = Attention(261, hidden_size)
+        self.attnA = Attention(audio_out, hidden_size)
 
         # Video Attention
-        self.attnV = Attention(1125, hidden_size)
+        self.attnV = Attention(video_out, hidden_size)
 
         # Answer Encoder
         self.answerencoder = AnswerEncoder(num_embeddings=num_embeddings, 
@@ -306,36 +306,59 @@ class MovieDAN(nn.Module):
     def forward(self, question, images, audios, subtitles, list_answers):
         # Prepare Question Features
         qts = self.textencoder.forward(question) # (seq_len, batch_size, dim)
-        sts = self.subtitleencoder.forward(subtitles) #
-        ats = self.audioencoder.forward(audios)
-        vts = self.videoencoder.forward(images)
+        if self.weight_qs != 0:
+            sts = self.subtitleencoder.forward(subtitles) #
+        if self.weight_qa != 0:
+            ats = self.audioencoder.forward(audios)
+        if self.weight_qv != 0:
+            vts = self.videoencoder.forward(images)
 
         # Initialize Memory
         q = qts.mean(0)
-        s = self.tanh(self.Ps(sts.mean(0)))
-        a = self.tanh(self.Pa(ats.mean(0)))
-        v = self.tanh(self.Pv(vts.mean(0)))
+        if self.weight_qs != 0:
+            s = self.tanh(self.Ps(sts.mean(0)))
+        else:
+            s = 0
+        if self.weight_qa != 0:
+            a = self.tanh(self.Pa(ats.mean(0)))
+        else:
+            a = 0
+        if self.weight_qv != 0:
+            v = self.tanh(self.Pv(vts.mean(0)))
+        else:
+            v = 0
+            
         memory = self.weight_qs * q * s + self.weight_qa * q * a + self.weight_qv * q * v
 
         # K indicates the number of hops
         for k in range(self.k):
+
             
             # Question Attention
             alphaQ = self.attnQ(qts, memory)
             q = (alphaQ * qts).sum(0)
 
             # Subtitle Attention
-            alphaS = self.attnS(sts, memory)
-            s = (self.tanh(self.Ps(alphaS * sts))).sum(0)
+            if self.weight_qs != 0:
+                alphaS = self.attnS(sts, memory)
+                s = (self.tanh(self.Ps(alphaS * sts))).sum(0)
+            else:
+                s = 0
 
             # Audio Attention
-            alphaA = self.attnA(ats, memory)
-            a = (self.tanh(self.Pa(alphaA * ats))).sum(0)
+            if self.weight_qa != 0:
+                alphaA = self.attnA(ats, memory)
+                a = (self.tanh(self.Pa(alphaA * ats))).sum(0)
+            else:
+                a = 0
 
             # Video Attention
-            alphaV = self.attnV(vts, memory)
-            v = (self.tanh(self.Pv(alphaV * vts))).sum(0)
-   
+            if self.weight_qv != 0:
+                alphaV = self.attnV(vts, memory)
+                v = (self.tanh(self.Pv(alphaV * vts))).sum(0)
+            else:
+                v = 0
+                
             # Build Memory
             memory = self.weight_qs * q * s + self.weight_qa * q * a + self.weight_qv * q * v
 

@@ -29,16 +29,20 @@ epochs = 50
 batch_size = 8
 initial_lr = 1e-3  # default Adam lr
 lr_halflife = 50000  # in iterations
-data_workers = 8
+data_workers = 16
 
 # model specification
 sub_out = 261
-audio_out = 261
+audio_out = 549
 video_out = 1125
 
-weight_qv = 1/3
-weight_qs = 1/3
-weight_qa = 1/3
+use_video = False
+use_subtitle = True
+use_audio = False
+
+weight_qv = 0
+weight_qs = 1/2
+weight_qa = 0
 k = 2
 
 name = 'video-audio'
