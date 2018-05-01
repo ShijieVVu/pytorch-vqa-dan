@@ -8,6 +8,9 @@ import torch.utils.data as data
 
 import config
 
+# path to all processed video files
+VIDEO_BASE = '/media/shijie/Users/WUSHI/github/Multiple-Attention-Model-for-MovieQA/data/data_processed/'
+
 def pad_longest(v, fillvalue=0):
     arr = np.array(list(itertools.zip_longest(*v, fillvalue=fillvalue)))
     arr = torch.LongTensor(arr)
@@ -50,7 +53,7 @@ class MovieQADataset(object):
         #self.audio_base = '/home/shijie/Downloads/features/mel/features/melspectrogram_128/all_video_clips/'
         self.audio_postfix = '.video_14.npy'
         #self.audio_postfix = '.video.mp4.orig.spec.npy'
-        self.video_base = '/media/shijie/Users/WUSHI/github/Multiple-Attention-Model-for-MovieQA/data/data_processed/'
+        self.video_base = VIDEO_BASE
         self.video_postfix = '.video.mp4features.p'
 
         self.use_subtitle = use_subtitle

@@ -304,6 +304,7 @@ class MovieDAN(nn.Module):
         self.weight_qs = weight_qs
 
     def forward(self, question, images, audios, subtitles, list_answers):
+#        import pdb; pdb.set_trace()
         # Prepare Question Features
         qts = self.textencoder.forward(question) # (seq_len, batch_size, dim)
         if self.weight_qs != 0:
@@ -320,6 +321,7 @@ class MovieDAN(nn.Module):
         else:
             s = 0
         if self.weight_qa != 0:
+#            import pdb; pdb.set_trace()
             a = self.tanh(self.Pa(ats.mean(0)))
         else:
             a = 0
