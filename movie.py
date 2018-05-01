@@ -27,7 +27,7 @@ def get_dataset(train=False, val=False, test=False, use_subtitle=True, use_audio
         split = 'test'
     data_pickle = './movieqa/movieqa.{}.pickle'.format(split)
     vocab_pickle = './movieqa/movieqa.vocab'
-    dataset = MovieQADataset(data_pickle, vocab_pickle, config.batch_size, shuffle=train, use_subtitle=use_subtitle, use_audio=use_audio, use_video=use_video)
+    dataset = MovieQADataset(data_pickle, vocab_pickle, config.batch_size, =train, use_subtitle=use_subtitle, use_audio=use_audio, use_video=use_video)
     return dataset
 
 class MovieQADataset(object):
@@ -98,6 +98,7 @@ class MovieQADataset(object):
                 batch_subtitles.append(subtitles)
                 batch_indicator.append(self.qids[order_idx])
 
+                '''
                 # Answer shuffling 
                 tp1 = []
                 for i in range(5):
@@ -114,6 +115,7 @@ class MovieQADataset(object):
                     if tmp[i][1] == 1:
                         correct_idx = i
                         break
+                '''
                 
                 batch_answers.append(answers)
                 batch_correct_index.append(correct_idx)
