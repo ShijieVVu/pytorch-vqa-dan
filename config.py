@@ -20,7 +20,6 @@ central_fraction = 0.875  # only take this much of the centre when scaling and c
 # model config
 pretrained = True
 embedding_dim = 128
-hidden_size = 64
 max_answers = 3000
 movie_answer_size = 5
 
@@ -29,24 +28,28 @@ epochs = 50
 batch_size = 8
 initial_lr = 1e-3  # default Adam lr
 lr_halflife = 50000  # in iterations
-data_workers = 16
+data_workers = 8
 
 # model specification
 sub_out = 261
-audio_out = 549
 video_out = 1125
 
+k = 2
+
+# Name for model and directory
+name = 'video_conv16'
+run_number = 'video_conv16'
+
+# To change
+hidden_size = 64
+audio_out = 261
+
 # Load these features or not
-use_video = False
-use_subtitle = True
+use_video = True
+use_subtitle = False
 use_audio = False
 
 # Weights on features
-weight_qv = 0
-weight_qs = 1
+weight_qv = 1
+weight_qs = 0
 weight_qa = 0
-
-k = 3
-
-# Name for model and directory
-name = 'video-audio'

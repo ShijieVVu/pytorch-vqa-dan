@@ -46,8 +46,10 @@ class MovieQADataset(object):
 
         self.q_clips = pickle.load(open('./movieqa/q_clips.p', 'rb'))
         # change this to your audio base
-        self.audio_base = '/home/shijie/Downloads/features/sound_out_all/conv_16/tf_feat_'
-        self.audio_postfix = '.video_16.npy'
+        self.audio_base = '/home/shijie/Downloads/features/sound_out_all/conv_14/tf_feat_'
+        #self.audio_base = '/home/shijie/Downloads/features/mel/features/melspectrogram_128/all_video_clips/'
+        self.audio_postfix = '.video_14.npy'
+        #self.audio_postfix = '.video.mp4.orig.spec.npy'
         self.video_base = '/media/shijie/Users/WUSHI/github/Multiple-Attention-Model-for-MovieQA/data/data_processed/'
         self.video_postfix = '.video.mp4features.p'
 
@@ -85,11 +87,13 @@ class MovieQADataset(object):
             batch_subtitles = []
             batch_answers = []
             batch_correct_index = []
+            batch_indicator = []
             for idx in range(start_idx, end_idx):
                 order_idx = order[idx]
                 question, subtitles, answers, correct_idx = self.__getitem__(order_idx)
                 batch_question.append(question)
                 batch_subtitles.append(subtitles)
+                batch_indicator.append(self.qids[order_idx])
 
                 # Answer shuffling 
                 tp1 = []
@@ -115,10 +119,13 @@ class MovieQADataset(object):
                 if use_audio:
                     audio = []
                     for name in video_names:
+#                        import pdb; pdb.set_trace()
+#                        import pdb; pdb.set_trace()
                         af = np.load("{}{}{}".format(self.audio_base, name[:name.find('.video')], self.audio_postfix))
-                    
-                        af = af.T[:, ::40]
+                        af = af.T[:, ::50]
+                        
                         audio.append(af)
+#                        import pdb; pdb.set_trace()
                     audio1 = np.concatenate(audio, axis=1).tolist()
                     batch_audio.append(audio1)
                         
@@ -146,7 +153,7 @@ class MovieQADataset(object):
             if use_video:
                 tensor_images = torch.stack([pad_longest(list(v)) for v in zip(*batch_images)]).permute(1, 0, 2)
 
-            yield tensor_question, tensor_images, tensor_audio, tensor_subtitles, list_tensor_answer, tensor_correct_index
+            yield tensor_question, tensor_images, tensor_audio, tensor_subtitles, list_tensor_answer, batch_indicator, tensor_correct_index
 
 if __name__ == "__main__":
     pass
