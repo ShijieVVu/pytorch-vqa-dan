@@ -101,8 +101,8 @@ def main():
 
     cudnn.benchmark = True
 
-    train_dataset = movie.get_dataset(train=True, use_subtitle=config.use_subtitle, use_audio=config.use_audio, use_video=config.use_video)
-    val_dataset = movie.get_dataset(val=True, use_subtitle=config.use_subtitle, use_audio=config.use_audio, use_video=config.use_video)
+    train_dataset = movie.get_dataset(train=True)
+    val_dataset = movie.get_dataset(val=True)
     
     # Build Model
     vocab_size = len(train_dataset.vocab)

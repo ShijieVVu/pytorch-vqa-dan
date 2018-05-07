@@ -1,14 +1,8 @@
 # paths
-movieqa_benchmark = '/Users/iammrhelo/Courses/10701/MovieQA_benchmark'
-qa_path = 'vqa'  # directory containing the question and annotation jsons
-train_path = 'mscoco/train2014'  # directory of training images
-val_path = 'mscoco/val2014'  # directory of validation images
-test_path = 'mscoco/test2015'  # directory of test images
-preprocessed_path = './resnet/resnet-14x14.h5'  # path where preprocessed features are saved to and loaded from
-vocabulary_path = 'vocab.json'  # path where the used vocabularies for question and answers are saved to
-
-task = 'OpenEnded'
-dataset = 'mscoco'
+video_path = '/media/shijie/Users/WUSHI/github/Multiple-Attention-Model-for-MovieQA/data/data_processed/' # path to the processed video file folder
+video_postfix = '.video.mp4features.p' # name postfix of each video feature file
+audio_path = '/home/shijie/Downloads/features/sound_out_all/conv_16/tf_feat_' # path to the processed audio file folder
+audio_postfix = '.video_16.npy' # name postfix of each audio feature file
 
 # preprocess config
 preprocess_batch_size = 64
@@ -35,11 +29,12 @@ data_workers = 16
 sub_out = 261
 audio_out = 549
 video_out = 1125
-
+'''
 # Load these features or not
 use_video = False
 use_subtitle = False
 use_audio = True
+'''
 
 # Weights on features
 weight_qv = 0

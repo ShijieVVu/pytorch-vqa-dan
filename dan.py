@@ -167,16 +167,16 @@ class SubtitleEncoder(nn.Module):
 
     def forward(self, subtitles):
         # Define Forward params here
-        x0 = subtitles.permute(1, 0)
-        x1 = self.embed(x0)
-        x2 = self.conv1(x1.unsqueeze(1))
-        x3 = F.relu(self.pool1(x2))
-        x4 = self.conv2(x3)
-        x5 = self.dropout(F.relu(self.pool2(x4)))
-        x6 = x5.permute(2, 0, 1, 3)
+        x = subtitles.permute(1, 0)
+        x = self.embed(x)
+        x = self.conv1(x.unsqueeze(1))
+        x = F.relu(self.pool1(x))
+        x = self.conv2(x)
+        x = self.dropout(F.relu(self.pool2(x)))
+        x = x.permute(2, 0, 1, 3)
         bs = subtitles.size()[1]
-        x7 = x6.contiguous().view(x6.size()[0], bs, -1)
-        return x7
+        x = x.contiguous().view(x.size()[0], bs, -1)
+        return x
 
 class AudioEncoder(nn.Module):
     def __init__(self):

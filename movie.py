@@ -13,7 +13,7 @@ def pad_longest(v, fillvalue=0):
     arr = torch.LongTensor(arr)
     return arr
 
-def get_dataset(train=False, val=False, test=False, use_subtitle=True, use_audio=True, use_video=True):
+def get_dataset(train=False, val=False, test=False):
     """ Returns a data loader for the desired split """
     assert train + val + test == 1, 'need to set exactly one of {train, val, test} to True'
     if train:
@@ -24,11 +24,11 @@ def get_dataset(train=False, val=False, test=False, use_subtitle=True, use_audio
         split = 'test'
     data_pickle = './movieqa/movieqa.{}.pickle'.format(split)
     vocab_pickle = './movieqa/movieqa.vocab'
-    dataset = MovieQADataset(data_pickle, vocab_pickle, config.batch_size, shuffle=train, use_subtitle=use_subtitle, use_audio=use_audio, use_video=use_video)
+    dataset = MovieQADataset(data_pickle, vocab_pickle, config.batch_size, shuffle=train)
     return dataset
 
 class MovieQADataset(object):
-    def __init__(self, data_pickle, vocab_pickle, batch_size, use_subtitle=True, use_audio=True, use_video=True, shuffle=False):
+    def __init__(self, data_pickle, vocab_pickle, batch_size, shuffle=False):
         super(MovieQADataset, self).__init__()
         with open(data_pickle,'rb') as fin:
             data = pickle.load(fin)
@@ -46,14 +46,10 @@ class MovieQADataset(object):
 
         self.q_clips = pickle.load(open('./movieqa/q_clips.p', 'rb'))
         # change this to your audio base
-        self.audio_base = '/home/shijie/Downloads/features/sound_out_all/conv_16/tf_feat_'
-        self.audio_postfix = '.video_16.npy'
-        self.video_base = '/media/shijie/Users/WUSHI/github/Multiple-Attention-Model-for-MovieQA/data/data_processed/'
-        self.video_postfix = '.video.mp4features.p'
-
-        self.use_subtitle = use_subtitle
-        self.use_audio = use_audio
-        self.use_video = use_video
+        self.audio_base = config.audio_path
+        self.audio_postfix = config.audio_postfix
+        self.video_base = config.video_path
+        self.video_postfix = config.video_postfix
 
     def __len__(self):
         return len(self.qids)
@@ -68,9 +64,8 @@ class MovieQADataset(object):
         return q, s, a, c
 
     def loader(self):
-        use_subtitle = self.use_subtitle
-        use_audio = self.use_audio
-        use_video = self.use_video
+        use_audio = True if config.weight_qa > 0 else False
+        use_video = True if config.weight_qv > 0 else False
         
         order = list(range(len(self.qids)))
         if self.shuffle:
