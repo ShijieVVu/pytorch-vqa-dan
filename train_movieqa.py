@@ -52,7 +52,7 @@ def run(net, dataset, optimizer, train=False, prefix='', epoch=0):
     total_loss = 0
     total_iterations = 0
     
-    for q, v, au, s, la, c in tq:
+    for q, v, au, s, la, c, qids in tq:
         var_params = {
             'requires_grad': False,
         }
@@ -94,7 +94,7 @@ def main():
     else:
         from datetime import datetime
         name = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
-    logall = Logger(config.run_number)
+    logall = Logger(config.name)
     sys.stdout = logall
     target_name = os.path.join('logs', '{}.pth'.format(name))
     print('will save to {}'.format(target_name))

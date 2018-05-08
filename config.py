@@ -29,20 +29,13 @@ data_workers = 16
 sub_out = 261
 audio_out = 549
 video_out = 1125
-'''
-# Load these features or not
-use_video = False
-use_subtitle = False
-use_audio = True
-'''
 
 # Weights on features
 weight_qv = 0
-weight_qs = 0
-weight_qa = 1
+weight_qs = 1
+weight_qa = 0
 
 k = 2
 
 # Name for model and directory
 name = 'audio_conv14_1e-3'
-run_number = 'audio_conv14_1e-3'

@@ -80,28 +80,31 @@ class MovieQADataset(object):
             batch_subtitles = []
             batch_answers = []
             batch_correct_index = []
+            batch_indicator = []
             for idx in range(start_idx, end_idx):
                 order_idx = order[idx]
                 question, subtitles, answers, correct_idx = self.__getitem__(order_idx)
                 batch_question.append(question)
                 batch_subtitles.append(subtitles)
+                batch_indicator.append(self.qids[order_idx])
 
-                # Answer shuffling 
-                tp1 = []
-                for i in range(5):
-                    if i == correct_idx:
-                        tp1.append(1)
-                    else:
-                        tp1.append(0)
+                if self.shuffle:
+                    # Answer shuffling
+                    tp1 = []
+                    for i in range(5):
+                        if i == correct_idx:
+                            tp1.append(1)
+                        else:
+                            tp1.append(0)
                         
-                tmp = list(zip(answers, tp1))
-                random.shuffle(tmp)
-                answers = [m[0] for m in tmp]
+                    tmp = list(zip(answers, tp1))
+                    random.shuffle(tmp)
+                    answers = [m[0] for m in tmp]
                 
-                for i in range(5):
-                    if tmp[i][1] == 1:
-                        correct_idx = i
-                        break
+                    for i in range(5):
+                        if tmp[i][1] == 1:
+                            correct_idx = i
+                            break
                 
                 batch_answers.append(answers)
                 batch_correct_index.append(correct_idx)
@@ -141,7 +144,7 @@ class MovieQADataset(object):
             if use_video:
                 tensor_images = torch.stack([pad_longest(list(v)) for v in zip(*batch_images)]).permute(1, 0, 2)
 
-            yield tensor_question, tensor_images, tensor_audio, tensor_subtitles, list_tensor_answer, tensor_correct_index
+            yield tensor_question, tensor_images, tensor_audio, tensor_subtitles, list_tensor_answer, tensor_correct_index, batch_indicator
 
 if __name__ == "__main__":
     pass
