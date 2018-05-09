@@ -1,3 +1,6 @@
+# Name for model and directory
+name = 'audio_model'
+
 # paths
 video_path = '/media/shijie/Users/WUSHI/github/Multiple-Attention-Model-for-MovieQA/data/data_processed/' # path to the processed video file folder
 video_postfix = '.video.mp4features.p' # name postfix of each video feature file
@@ -25,6 +28,11 @@ initial_lr = 1e-3  # default Adam lr
 lr_halflife = 50000  # in iterations
 data_workers = 16
 
+# prediction config
+use_prior_model = True
+prior_weight_path = "/home/shijie/github/pytorch-vqa-dan/model_sub_model/dan-audio-E04-A0.302.pt"
+pred_file_path = "./prediction/test-models"
+
 # model specification
 sub_out = 261
 audio_out = 549
@@ -36,6 +44,3 @@ weight_qs = 1
 weight_qa = 0
 
 k = 2
-
-# Name for model and directory
-name = 'audio_conv14_1e-3'

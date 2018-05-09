@@ -90,6 +90,7 @@ class MovieQADataset(object):
 
                 if self.shuffle:
                     # Answer shuffling
+                    print("Using answer shuffling")
                     tp1 = []
                     for i in range(5):
                         if i == correct_idx:
@@ -135,7 +136,11 @@ class MovieQADataset(object):
             tensor_subtitles = pad_longest(batch_subtitles)
             
             list_tensor_answer = [ pad_longest(a) for a in batch_answers ]
-            tensor_correct_index = torch.LongTensor(batch_correct_index)
+            tensor_correct_index = torch.LongTensor([0])
+
+            batch_correct_index = torch.LongTensor([0])
+            if batch_correct_index[0] is not None:
+                tensor_correct_index = torch.LongTensor(batch_correct_index)
             
             tensor_audio = torch.LongTensor([0])
             if use_audio:
